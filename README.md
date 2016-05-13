@@ -8,10 +8,9 @@ Create a config.json with the following format in the same directory as hdbits-f
 
 ```
 {
-	"name":"hdbits",
-	"username":"*username*",
-	"passkey":"*passkey*",
-	"output_dir":"*output directory*"
+	"username":"barackobama",
+	"passkey":"A1B2C3",
+	"output_dir":"~/rtorrent/watchdir"
 }
 ```
 
