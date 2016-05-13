@@ -5,6 +5,8 @@ def checkIfDownloaded(id):
 	return True
 
 def fetchTorrent(hash):
+	#fetches torrent based on the given hash.  checks the database if it's already been downloaded.
+	#if not, it downloads it.
 	hash2 = (hash,)
 	fetchPayload = {"username":username,"passkey":passkey,"limit":"1","hash":str(hash)}
 	fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=False)
@@ -30,6 +32,7 @@ def fetchTorrent(hash):
 		return False;
 
 def populateWatchlist():
+	#checks queue.html, extracts all the ID #s from the links, and adds that list to the db
 	#sys.stdin.read(),sys.argv[1])
 	parser = etree.HTMLParser()
 	parsedPage = etree.parse("queue.html", parser)
@@ -86,6 +89,7 @@ def main():
 			fetchTorrent(str(x['hash']))
 
 	#fetch any freeleech off the watchlist
+	#currently checking first 5 to prevent hammering while testing
 	j=0;
 	for row in cur.execute('SELECT * FROM watched'):
 	    if j>=5:
