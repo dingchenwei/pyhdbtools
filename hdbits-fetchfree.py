@@ -54,15 +54,27 @@ def populateWatchlist(queueFilename):
 			idStr = str(x[15:])
 			nameStr = names[i].encode('ascii', 'ignore').decode('ascii')
 			cur.execute('''INSERT INTO watched(id,name) VALUES(?,?)''', (idStr, nameStr))
-		#else:
-		#	print x[15:] + " SKIPPED"
 		i+=1	
+
+def generateConfigFile():
+	usernameInput = raw_input("Please input your hdbits username: ")
+	passkeyInput = raw_input("Please input your hdbits passkey: ")
+	watchdirInput = raw_input(".torrent file output directory: [watchdir/] ") 
+
+	if watchdirInput[-1:] != "/":
+		watchdirInput = watchdirInput + "/"
+
+	data = {'username':usernameInput,'passkey':passkeyInput,'output_dir':watchdirInput}
+	
+	with open('config.json', 'w') as outfile:
+		json.dump(data, outfile)
+	exit(0)
 
 def main():
 	global cur, username, passkey, watchdir, apiUrl, headers
-	updateFeatured = fetchFeatured = False
+	makeConf = updateFeatured = fetchFeatured = False
 
-	options, remainder = getopt.getopt(sys.argv[1:], 'u:f', ['update-featured=','fetch-featured',])
+	options, remainder = getopt.getopt(sys.argv[1:], 'u:f', ['update-featured=','fetch-featured','makeconf',])
 
 	for opt, arg in options:
 		if opt in ('-u', '--update-featured'):
@@ -70,12 +82,20 @@ def main():
 			queueFilename = arg
 		elif opt in ('-f', '--fetch-featured'):
 			fetchFeatured = True
+		elif opt in ('--makeconf'):
+			makeConf = True
+
+	if makeConf:
+		generateConfigFile()
 
 	filePath = os.path.dirname(os.path.realpath(__file__))
-
-	with open(filePath + "/config.json") as json_data:
-	    jsonConfig = json.load(json_data)
-	    json_data.close()
+	try:
+		with open(filePath + "/config.json") as json_data:
+			jsonConfig = json.load(json_data)
+			json_data.close()
+	except IOError:
+		print "config.json not found. Please run again with --makconf"
+		exit(1)
 
 	username = jsonConfig['username']
 	passkey = jsonConfig['passkey']
@@ -84,7 +104,6 @@ def main():
 	apiUrl = 'https://hdbits.org/api/torrents'
 	headers = {'content-type': 'application/json'}
 
-	
 	conn = sqlite3.connect(filePath + "/hdbits.db")
 	cur = conn.cursor()
 	cur.execute("CREATE TABLE IF NOT EXISTS complete(id INT, name TEXT)")

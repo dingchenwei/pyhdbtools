@@ -28,13 +28,16 @@ $ python hdbits-fetchfree.py
 
 	hdbits-fetchfree.py [OPTIONS] [FILE]
 
-	-u, --update-featured filename.html
-		Processes the "Featured Torrents Queue"	page from hdbits and adds them to a watchlist. Local files only. 
-		Does not accept URLs to not break rule prohibiting site scraping.
-
 	-f, --fetch-featured
-		Checks the list of upcoming featured torrents and downloads any that are freeleech. High number of API
-		calls. Not recommended to be run more than once every 5 minutes.
+		Checks the list of upcoming featured torrents and downloads any that are freeleech. High number 
+		of API calls. Not recommended to be run more than once every 5 minutes.
+
+	--makeconf
+		Generates json.config
+
+	-u, --update-featured filename.html
+		Processes the "Featured Torrents Queue"	page from hdbits and adds them to a watchlist. Local
+		files only. Does not accept URLs to not break rule prohibiting site scraping.
 
 ### Automation
 
