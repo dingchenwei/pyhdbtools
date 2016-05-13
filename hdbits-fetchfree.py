@@ -1,4 +1,4 @@
-import json, requests, sys, urllib2, pprint, sqlite3, getopt
+import json, requests, sys, urllib2, pprint, sqlite3, getopt, os
 from lxml import etree
 
 def ifDownloaded(id):
@@ -71,7 +71,9 @@ def main():
 		elif opt in ('-f', '--fetch-featured'):
 			fetchFeatured = True
 
-	with open('config.json') as json_data:
+	filePath = os.path.dirname(os.path.realpath(__file__))
+
+	with open(filePath + "/config.json") as json_data:
 	    jsonConfig = json.load(json_data)
 	    json_data.close()
 
@@ -82,7 +84,8 @@ def main():
 	apiUrl = 'https://hdbits.org/api/torrents'
 	headers = {'content-type': 'application/json'}
 
-	conn = sqlite3.connect('hdbits.db')
+	
+	conn = sqlite3.connect(filePath + "/hdbits.db")
 	cur = conn.cursor()
 	cur.execute("CREATE TABLE IF NOT EXISTS complete(id INT, name TEXT)")
 	cur.execute("CREATE TABLE IF NOT EXISTS watched(id INT, name TEXT)")
