@@ -27,7 +27,6 @@ def fetchTorrent(id):
 	fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=False)
 	fetchData = json.loads(fetchResponse.text)
 	if not ifDownloaded(id):
-		name2 = (fetchData['data'][0]['filename'],)
 		torrentUrl = "https://hdbits.org/download.php?id=" + str(fetchData['data'][0]['id']) + "&passkey=" + passkey
 		idStr = str(fetchData['data'][0]['id'])
 		nameStr = str(fetchData['data'][0]['filename'])
@@ -42,7 +41,6 @@ def fetchTorrent(id):
 
 def populateWatchlist(queueFilename):
 	#checks queue.html, extracts all the ID #s from the links, and adds that list to the db
-	#sys.stdin.read(),sys.argv[1])
 	parser = etree.HTMLParser()
 	parsedPage = etree.parse(queueFilename, parser)
 	hyperlinks = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/@href") 
@@ -56,12 +54,11 @@ def populateWatchlist(queueFilename):
 			idStr = str(x[15:])
 			nameStr = names[i].encode('ascii', 'ignore').decode('ascii')
 			cur.execute('''INSERT INTO watched(id,name) VALUES(?,?)''', (idStr, nameStr))
-		else:
-			print x[15:] + " SKIPPED"
+		#else:
+		#	print x[15:] + " SKIPPED"
 		i+=1	
 
 def main():
-
 	global cur, username, passkey, watchdir, apiUrl, headers
 	updateFeatured = fetchFeatured = False
 
@@ -100,9 +97,8 @@ def main():
 			fetchTorrent(x['id'])
 
 	#fetch any freeleech off the watchlist
-	#currently checking first 5 to prevent hammering while testing
 	if fetchFeatured:
-		for row in cur.execute('SELECT * FROM watched LIMIT 5'):
+		for row in cur.execute('SELECT * FROM watched LIMIT 7'):
 		    payload = {"username":username,"passkey":passkey,"limit":"1","id":row[0]}
 		    response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=False)
 		    torrentData = json.loads(response.text)
@@ -110,8 +106,8 @@ def main():
 		    if torrentData['data'][0]['freeleech'] == "yes":
 		    	fetchTorrent(torrentData['data'][0]['id'])
 		    	cur.execute('DELETE FROM watched WHERE id=?', (row[0],))
-		    else:
-		    	print 'no match found'
+		    #else:
+		    #	print 'no match found'
 
 	if updateFeatured:
 		populateWatchlist(queueFilename)
