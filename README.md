@@ -5,24 +5,16 @@ A tool for automatically fetching new freeleech and featured torrents at hdbits
 
 ### Prerequisites
 Python 2.7
-pip install lxml
-
-Create a config.json with the following format in the same directory as hdbits-fetchfree.py
-
-```
-{
-	"username":"barackobama",
-	"passkey":"A1B2C3",
-	"output_dir":"~/rtorrent/watchdir/"
-}
-```
+lxml
+	pip install lxml
 
 ### First Run
 To run the program, type
 
-```
-$ python hdbits-fetchfree.py
-```
+	$ python hdbits-fetchfree.py --makeconf
+
+You will need to know your hdbits username, passkey, and where to store the fetched .torrent files
+
 
 ### Additional Options
 
@@ -43,7 +35,15 @@ $ python hdbits-fetchfree.py
 
 Sample Crontab to check new torrents every minute and featured every 5
 
-```
-* * * * *       /usr/bin/python2.7 ~/hdbits-fetchfree/hdbits-fetchfree.py
-*/5 * * * *     /usr/bin/python2.7 ~/hdbits-fetchfree/hdbits-fetchfree.py -f
-```
+	* * * * *       /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py
+	*/5 * * * *     /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py -f
+
+###json.config
+
+json.config is created in the following format:
+
+	{
+		"username":"barackobama",
+		"passkey":"A1B2C3",
+		"output_dir":"~/rtorrent/watchdir/"
+	}

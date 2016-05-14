@@ -3,7 +3,6 @@ from lxml import etree
 
 def ifDownloaded(id):
 	#checks if the id is in the downloaded list
-	id = str(id)
 	cur.execute('SELECT * FROM complete WHERE id=?', (id,))
 	if len(cur.fetchall()) == 0:
 		return False
@@ -12,32 +11,32 @@ def ifDownloaded(id):
 
 def ifWatched(id):
 	#checks if the id is in the watchlist
-	id = str(id)
 	cur.execute('SELECT * FROM watched WHERE id=?', (id,))
 	if len(cur.fetchall()) == 0:
 		return False
 	else:
 		return True
 
-def fetchTorrent(id):
+def fetchTorrent(id,watchdir):
 	#fetches torrent based on the given torrent id.  checks the database if it's already been downloaded.
 	#if not, it downloads it.
-	id = str(id)
 	fetchPayload = {"username":username,"passkey":passkey,"limit":"1","id":id}
 	fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=False)
 	fetchData = json.loads(fetchResponse.text)
+	filePath = os.path.dirname(os.path.realpath(__file__))
+
 	if not ifDownloaded(id):
 		torrentUrl = "https://hdbits.org/download.php?id=" + str(fetchData['data'][0]['id']) + "&passkey=" + passkey
 		idStr = str(fetchData['data'][0]['id'])
 		nameStr = str(fetchData['data'][0]['filename'])
 		fullStr = watchdir + nameStr
+		if fullStr[:1] != "/" or fullStr[:1] != "~":
+			fullStr = filePath + "/" + fullStr
 		print "fetching: " + nameStr
 		torrentFile = urllib2.urlopen(torrentUrl)
 		with open(fullStr,'wb') as output:
 				output.write(torrentFile.read())
 		cur.execute('''INSERT INTO complete(id, name) VALUES(?,?)''', (idStr, nameStr))
-	else:
-		print "already fetched: " + str(fetchData['data'][0]['filename'])
 
 def populateWatchlist(queueFilename):
 	#checks queue.html, extracts all the ID #s from the links, and adds that list to the db
@@ -46,7 +45,7 @@ def populateWatchlist(queueFilename):
 	hyperlinks = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/@href") 
 	names = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/text()")
 	cur.execute('''DROP TABLE watched''')
-	cur.execute("CREATE TABLE IF NOT EXISTS watched(id INT, name TEXT)")
+	cur.execute('''CREATE TABLE IF NOT EXISTS watched(id INT, name TEXT)''')
 	i=0;
 	for x in hyperlinks:
 		if not ifDownloaded(x[15:]) and not ifWatched(x[15:]):
@@ -65,7 +64,7 @@ def generateConfigFile():
 	while True:
 		usernameInput = raw_input("Please input your hdbits username: [" + usernameDefaultInput + "] ")
 		passkeyInput = raw_input("Please input your hdbits passkey: [" + passkeyDefaultInput + "] ")
-		watchdirInput = raw_input(".torrent file output directory: [" + watchdirDefaultInput + "] ") 
+		watchdirInput = raw_input(".torrent file output directory (relative or absolute): [" + watchdirDefaultInput + "] ") 
 
 		if len(usernameInput) == 0:
 			usernameInput = usernameDefaultInput
@@ -84,8 +83,16 @@ def generateConfigFile():
 		while True:
 			a = raw_input("\nIs this correct? (y/n) ")
 			if a == 'y':
-				isCorrect = True
-				break
+				payload = {"username":usernameInput,"passkey":passkeyInput}
+				headers = {'content-type': 'application/json'}
+				response = requests.post("https://hdbits.org/api/test", data=json.dumps(payload), headers=headers, verify=False)
+				testData = json.loads(response.text)
+				if testData['status'] == 0:
+					isCorrect = True
+					break
+				else:
+					print "Authentication failure. Check username or passkey"
+					break
 			elif a == 'n':
 				usernameDefaultInput = usernameInput
 				passkeyDefaultInput = passkeyInput
@@ -98,13 +105,18 @@ def generateConfigFile():
 	
 	with open('config.json', 'w') as outfile:
 		json.dump(data, outfile)
+	os.chmod('config.json', 0600)
+
 	exit(0)
 
 def main():
-	global cur, username, passkey, watchdir, apiUrl, headers
-	makeConf = updateFeatured = fetchFeatured = False
+	global cur, username, passkey, apiUrl, headers, filePath
+	
+	VERSION = 'build 051416 alpha'
 
-	options, remainder = getopt.getopt(sys.argv[1:], 'u:f', ['update-featured=','fetch-featured','makeconf',])
+	makeConf = updateFeatured = fetchFeatured = verbose = showVersion = False
+
+	options, remainder = getopt.getopt(sys.argv[1:], 'u:fv', ['update-featured=','fetch-featured','makeconf','version'])
 
 	for opt, arg in options:
 		if opt in ('-u', '--update-featured'):
@@ -114,13 +126,21 @@ def main():
 			fetchFeatured = True
 		elif opt in ('--makeconf'):
 			makeConf = True
+		elif opt in ('-v'):
+			verbose = True
+		elif opt in ('--version'):
+			showVersion = True
+
+	if showVersion:
+		print "hdbits-fetchfree " + VERSION
+		exit(0)
 
 	if makeConf:
 		generateConfigFile()
 
 	filePath = os.path.dirname(os.path.realpath(__file__))
 	try:
-		with open(filePath + "/config.json") as json_data:
+		with open(filePath + "/config.json",'r') as json_data:
 			jsonConfig = json.load(json_data)
 			json_data.close()
 	except IOError:
@@ -146,7 +166,7 @@ def main():
 
 	for x in torrentData['data']:
 		if x['freeleech'] == 'yes':
-			fetchTorrent(x['id'])
+			fetchTorrent(x['id'],watchdir)
 
 	#fetch any freeleech off the watchlist
 	if fetchFeatured:
@@ -156,10 +176,8 @@ def main():
 		    torrentData = json.loads(response.text)
 		    
 		    if torrentData['data'][0]['freeleech'] == "yes":
-		    	fetchTorrent(torrentData['data'][0]['id'])
+		    	fetchTorrent(torrentData['data'][0]['id'],watchdir)
 		    	cur.execute('DELETE FROM watched WHERE id=?', (row[0],))
-		    #else:
-		    #	print 'no match found'
 
 	if updateFeatured:
 		populateWatchlist(queueFilename)
