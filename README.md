@@ -4,9 +4,10 @@ A tool for automatically fetching new freeleech and featured torrents at hdbits
 ## Getting Started
 
 ### Prerequisites
-Linux / OS X (May work on Windows, currently untested)
-Python 2.7
-lxml
+* Linux / OS X (May work on Windows, currently untested)
+* Python 2.7
+* lxml
+
 	pip install lxml
 
 ### First Run
@@ -34,7 +35,7 @@ You will need to know your hdbits username, passkey, and where to store the fetc
 
 ### Automation
 
-Sample Crontab to check new torrents every minute and featured every 5
+Sample crontab to check new torrents every minute and featured every 5
 
 	* * * * *       /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py
 	*/5 * * * *     /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py -f
