@@ -4,6 +4,7 @@ A tool for automatically fetching new freeleech and featured torrents at hdbits
 ## Getting Started
 
 ### Prerequisites
+Linux / OS X (May work on Windows, currently untested)
 Python 2.7
 lxml
 	pip install lxml
