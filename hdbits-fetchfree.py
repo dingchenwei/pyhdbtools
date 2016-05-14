@@ -57,12 +57,42 @@ def populateWatchlist(queueFilename):
 		i+=1	
 
 def generateConfigFile():
-	usernameInput = raw_input("Please input your hdbits username: ")
-	passkeyInput = raw_input("Please input your hdbits passkey: ")
-	watchdirInput = raw_input(".torrent file output directory: [watchdir/] ") 
+	isCorrect = False
+	usernameDefaultInput = ""
+	passkeyDefaultInput = "" 
+	watchdirDefaultInput = "watchdir/"
 
-	if watchdirInput[-1:] != "/":
-		watchdirInput = watchdirInput + "/"
+	while True:
+		usernameInput = raw_input("Please input your hdbits username: [" + usernameDefaultInput + "] ")
+		passkeyInput = raw_input("Please input your hdbits passkey: [" + passkeyDefaultInput + "] ")
+		watchdirInput = raw_input(".torrent file output directory: [" + watchdirDefaultInput + "] ") 
+
+		if len(usernameInput) == 0:
+			usernameInput = usernameDefaultInput
+		if len(passkeyInput) == 0:
+			passkeyInput = passkeyDefaultInput
+		if len(watchdirInput) == 0:
+			watchdirInput = watchdirDefaultInput
+
+		if watchdirInput[-1:] != "/":
+			watchdirInput = watchdirInput + "/"
+
+		print "\n\nUsername: " + usernameInput
+		print "Passkey: " + passkeyInput
+		print "Output Directory: " + watchdirInput 
+
+		while True:
+			a = raw_input("\nIs this correct? (y/n) ")
+			if a == 'y':
+				isCorrect = True
+				break
+			elif a == 'n':
+				usernameDefaultInput = usernameInput
+				passkeyDefaultInput = passkeyInput
+				watchdirDefaultInput = watchdirInput
+				break
+		if isCorrect:
+			break
 
 	data = {'username':usernameInput,'passkey':passkeyInput,'output_dir':watchdirInput}
 	
