@@ -33,13 +33,20 @@ def fetchTorrent(id,watchdir):
 		#if path is relative, add directory the directory the file is running from
 		if fullStr[:1] != "/" or fullStr[:1] != "~" or fullStr[:1] != ".":
 			fullStr = filePath + "/" + fullStr
-		print "fetching: " + nameStr
+		if verbose:
+			print "fetching: " + nameStr + " at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		#save .torrent file
 		torrentFile = urllib2.urlopen(torrentUrl)
-		with open(fullStr,'wb') as output:
+		try:
+			with open(fullStr,'wb') as output:
 				output.write(torrentFile.read())
+		except IOError:
+			print "error writing " + fullStr
+			exit(1) 
 		#log download to database
 		cur.execute('''INSERT INTO complete(id, name) VALUES(?,?)''', (idStr, nameStr))
+	elif verbose:
+		print "already fetched: " + str(id)
 
 def populateWatchlist(queueFilename):
 	#checks queue.html, extracts all the ID #s from the links, and adds that list to the db
@@ -118,7 +125,7 @@ def generateConfigFile():
 	exit(0)
 
 def main():
-	global cur, username, passkey, apiUrl, headers, filePath, sslVerify
+	global cur, username, passkey, apiUrl, headers, filePath, sslVerify, verbose
 	
 	VERSION = 'build 051416 alpha'
 
