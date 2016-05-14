@@ -30,8 +30,9 @@ def fetchTorrent(id,watchdir):
 		idStr = str(fetchData['data'][0]['id'])
 		nameStr = str(fetchData['data'][0]['filename'])
 		fullStr = watchdir + nameStr
+		
 		#if path is relative, add directory the directory the file is running from
-		if fullStr[:1] != "/" or fullStr[:1] != "~" or fullStr[:1] != ".":
+		if not fullStr[:1] == "/" or fullStr[:1] == "~" or fullStr[:1] == ".":
 			fullStr = filePath + "/" + fullStr
 		if verbose:
 			print "fetching: " + nameStr + " at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -120,8 +121,12 @@ def generateConfigFile():
 
 	data = {'username':usernameInput,'passkey':passkeyInput,'output_dir':watchdirInput}
 	
-	with open('config.json', 'w') as outfile:
-		json.dump(data, outfile)
+	try:
+		with open('config.json', 'w') as outfile:
+			json.dump(data, outfile)
+	except IOError:
+		print "cannot write config.json"
+		exit(1)
 	#remove world read from config file to keep passkey a little more secure
 	os.chmod('config.json', 0660)
 	exit(0)
