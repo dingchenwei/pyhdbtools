@@ -40,6 +40,8 @@ def fetchTorrent(id,watchdir):
 		try:
 			with open(fullStr,'wb') as output:
 				output.write(torrentFile.read())
+			if verbose:
+				print "writing .torrent file to " + fullStr
 		except IOError:
 			print "error writing " + fullStr
 			exit(1) 
