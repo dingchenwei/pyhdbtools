@@ -4,11 +4,12 @@ A tool for automatically fetching new freeleech and featured torrents at hdbits
 ## Getting Started
 
 ### Prerequisites
-* Linux / OS X (May work on Windows, currently untested)
+* Linux / OS X. Windows support will come soon.
 * Python 2.7
 * lxml
-
-	pip install lxml
+```
+pip install lxml
+```
 
 ### First Run
 To run the program, type
@@ -29,9 +30,18 @@ You will need to know your hdbits username, passkey, and where to store the fetc
 	--makeconf
 		Generates json.config
 
+	--noverify
+		Skips SSL verification for API queries
+
 	-u, --update-featured filename.html
 		Processes the "Featured Torrents Queue"	page from hdbits and adds them to a watchlist. Local
 		files only. Does not accept URLs to not break rule prohibiting site scraping.
+
+	-v
+		Verbose output
+
+	--version
+		Shows version number
 
 ### Automation
 
