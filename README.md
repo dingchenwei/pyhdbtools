@@ -43,6 +43,19 @@ You will need to know your hdbits username, passkey, and where to store the fetc
 	--version
 		Shows version number
 
+### Fetching featured torrents
+
+To auto fetch featured torrents you must first save a copy of the [featured queue](https://hdbits.org/featuredqueue.php) as an html file,
+then feed that into the program. This is required as the site forbids tools scraping the site. Once you
+have saved the file, you can run the following command to add all of the upcoming featured torrents to 
+the watchlist.
+
+	$ python hdbits-fetchfree.py --update-featured featuredqueue.html
+
+You can then tell the app to check the upcoming queue to see if any of them are available for freeleech.
+
+	$ python hdbits-fetchfree.py --fetch-featured
+
 ### Automation
 
 Sample crontab to check new torrents every minute and featured every 5
