@@ -140,7 +140,7 @@ def generateConfigFile(sslVerify=True):
 
 def displayHelp():
 	print textwrap.dedent("""\
-    hdbits-fetchfree.py [OPTIONS] [FILE]
+    pyhdbtools.py [OPTIONS] [FILE]
 
 	RUN MODES
 

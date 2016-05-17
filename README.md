@@ -1,4 +1,4 @@
-# hdbits-fetchfree
+# pyhdbtools
 A tool for interacting with the hdbits api and downloading torrents
 
 ## Getting Started
@@ -14,7 +14,7 @@ pip install lxml requests
 ### First Run
 To run the program, type
 
-	$ python hdbits-fetchfree.py --makeconf
+	$ python pyhdbtools.py --makeconf
 
 You will need to know your hdbits username, passkey, and where to store the fetched .torrent files
 
@@ -25,15 +25,15 @@ then feed that into the program. This is required as the site forbids tools scra
 have saved the file, you can run the following command to add all of the upcoming featured torrents to 
 the watchlist.
 
-	$ python hdbits-fetchfree.py --update-featured featuredqueue.html
+	$ python pyhdbtools.py --update-featured featuredqueue.html
 
 You can then tell the app to check the upcoming queue to see if any of them are available for freeleech.
 
-	$ python hdbits-fetchfree.py --fetch-featured
+	$ python pyhdbtools.py --fetch-featured
 
 ### Additional Options
 
-    hdbits-fetchfree.py [OPTIONS] [FILE]
+    pyhdbtools.py [OPTIONS] [FILE]
 
 	RUN MODES
 
@@ -75,8 +75,8 @@ You can then tell the app to check the upcoming queue to see if any of them are 
 
 Sample crontab to check new torrents every minute and featured every 5
 
-	* * * * *       /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py --fetch-free
-	*/5 * * * *     /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py --fetch-featured
+	* * * * *       /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-free
+	*/5 * * * *     /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-featured
 
 ###json.config
 
