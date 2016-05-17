@@ -225,7 +225,7 @@ def main():
 		print "starting run at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 	if showVersion:
-		print "hdbits-fetchfree " + VERSION
+		print "pyhdbtools " + VERSION
 		exit(0)
 
 	if makeConf:
