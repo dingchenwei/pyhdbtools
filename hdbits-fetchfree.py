@@ -1,22 +1,23 @@
 import json, requests, sys, urllib2, pprint, sqlite3, getopt, os, textwrap, datetime
 from lxml import etree
 
-def ifDownloaded(id):
+def isDownloaded(id):
 	#checks if the id is in the downloaded list
+	cur = conn.cursor()
 	cur.execute('SELECT * FROM complete WHERE id=?', (id,))
 	return False if len(cur.fetchall()) == 0 else True
 
-def ifWatched(id):
+def isWatched(id):
 	#checks if the id is in the watchlist
+	cur = conn.cursor()
 	cur.execute('SELECT * FROM watched WHERE id=?', (id,))
 	return False if len(cur.fetchall()) == 0 else True
 
 def fetchTorrent(id,watchdir,sslVerify=True):
 	#fetches torrent based on the given torrent id.  checks the database if it's already been downloaded.
 	#if not, it downloads it.
-	
 	apiUrl = 'https://hdbits.org/api/torrents'
-	if ifDownloaded(id) == False or allowDupes:
+	if isDownloaded(id) == False or allowDupes:
 		fetchPayload = {"username":username,"passkey":passkey,"limit":"1","id":id}
 		fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=sslVerify)
 		fetchData = json.loads(fetchResponse.text)
@@ -25,8 +26,7 @@ def fetchTorrent(id,watchdir,sslVerify=True):
 		nameStr = fetchData['data'][0]['filename']
 		fullStr = os.path.abspath(watchdir) + nameStr
 
-		if verbose:
-			print "fetching: " + nameStr + " at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		print "fetching: " + nameStr + " at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		#save .torrent file
 		torrentFile = urllib2.urlopen(torrentUrl)
 		try:
@@ -38,7 +38,7 @@ def fetchTorrent(id,watchdir,sslVerify=True):
 			print "ERROR: could not write " + fullStr
 			exit(1) 
 		#log download to database
-		cur.execute('''INSERT INTO complete(id, name) VALUES(?,?)''', (idStr, nameStr))
+		conn.execute('''INSERT INTO complete(id, name) VALUES(?,?)''', (idStr, nameStr))
 		conn.commit()
 	elif debug:
 		print "already fetched: " + str(id)
@@ -49,16 +49,16 @@ def populateWatchlist(queueFilename):
 	parsedPage = etree.parse(queueFilename, parser)
 	hyperlinks = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/@href") 
 	names = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/text()")
-	cur.execute('''DROP TABLE watched''')
-	cur.execute('''CREATE TABLE IF NOT EXISTS watched(idx INT, id INT, name TEXT)''')
+	conn.execute('''DROP TABLE watched''')
+	conn.execute('''CREATE TABLE IF NOT EXISTS watched(idx INT, id INT, name TEXT)''')
 	i=0;
 	for x in hyperlinks:
-		if not ifDownloaded(x[15:]) and not ifWatched(x[15:]):
+		if not isDownloaded(x[15:]) and not isWatched(x[15:]):
 			print names[i] + " added to watchlist"
 			idStr = str(x[15:])
 			indexStr = str(i)
 			nameStr = names[i].encode('ascii', 'ignore').decode('ascii')
-			cur.execute('''INSERT INTO watched(idx,id,name) VALUES(?,?,?)''', (indexStr, idStr, nameStr))
+			conn.execute('''INSERT INTO watched(idx,id,name) VALUES(?,?,?)''', (indexStr, idStr, nameStr))
 		i+=1
 	conn.commit()	
 	exit(0)
@@ -168,7 +168,7 @@ def displayHelp():
 	exit(1)
 
 def main():
-	global cur, username, passkey, headers, verbose, conn, debug
+	global username, passkey, headers, verbose, conn, debug
 	
 	VERSION = 'build 051716 alpha'
 
@@ -205,6 +205,7 @@ def main():
 			showVersion = True
 		elif opt in ('--debug'):
 			debug = True
+			verbose = True
 
 	if debug:
 		print "starting run at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -245,9 +246,8 @@ def main():
 		print "Permissions error at " + fileBasePath + "/hdbits.db"
 		exit(1) 
 
-	cur = conn.cursor()
-	cur.execute("CREATE TABLE IF NOT EXISTS complete(id INT, name TEXT)")
-	cur.execute("CREATE TABLE IF NOT EXISTS watched(id INT, name TEXT)")
+	conn.execute("CREATE TABLE IF NOT EXISTS complete(id INT, name TEXT)")
+	conn.execute("CREATE TABLE IF NOT EXISTS watched(id INT, name TEXT)")
 
 	if(singleTorrent):
 		fetchTorrent(torrentID, watchdir,sslVerify=sslVerify)
@@ -269,6 +269,7 @@ def main():
 
 	#Checks the first 7 entries in the watchlist and downloads them if freeleech
 	if fetchFeatured:
+		cur = conn.cursor()
 		watchListTorrents = cur.execute('SELECT * FROM watched LIMIT 7')
 		i = 0
 		for row in watchListTorrents:
@@ -277,14 +278,17 @@ def main():
 			response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify)
 			torrentData = json.loads(response.text)
 
-			if torrentData['data'][0]['freeleech'] == "yes":
+			if isDownloaded(torrentData['data'][0]['id']):
+				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
+				conn.commit()
+			elif torrentData['data'][0]['freeleech'] == "yes":
 				fetchTorrent(torrentData['data'][0]['id'],watchdir,sslVerify=sslVerify)
-				cur.execute('DELETE FROM watched WHERE id=?', (row[1],))
+				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
 				conn.commit()
 			i+=1
 		if i == 0:
 			print "Warning: watchlist is empty"
-		conn.commit()
+		cur.close()
 
 	if not (updateFeatured or fetchFeatured or fetchFree or singleTorrent or makeConf or showVersion or dispHelp):
 		print "ERROR: No runmode specified"
