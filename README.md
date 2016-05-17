@@ -5,6 +5,7 @@ A tool for automatically fetching new freeleech and featured torrents at hdbits
 
 ### Prerequisites
 * Linux / OS X. Windows support will come soon.
+* sqlite 
 * Python 2.7
 * lxml
 ```
@@ -17,31 +18,6 @@ To run the program, type
 	$ python hdbits-fetchfree.py --makeconf
 
 You will need to know your hdbits username, passkey, and where to store the fetched .torrent files
-
-
-### Additional Options
-
-	hdbits-fetchfree.py [OPTIONS] [FILE]
-
-	-f, --fetch-featured
-		Checks the list of upcoming featured torrents and downloads any that are freeleech. High number 
-		of API calls. Not recommended to be run more than once every 5 minutes.
-
-	--makeconf
-		Generates json.config
-
-	--noverify
-		Skips SSL verification for API queries
-
-	-u, --update-featured filename.html
-		Processes the "Featured Torrents Queue"	page from hdbits and adds them to a watchlist. Local
-		files only. Does not accept URLs to not break rule prohibiting site scraping.
-
-	-v
-		Verbose output
-
-	--version
-		Shows version number
 
 ### Fetching featured torrents
 
@@ -56,12 +32,52 @@ You can then tell the app to check the upcoming queue to see if any of them are 
 
 	$ python hdbits-fetchfree.py --fetch-featured
 
+### Additional Options
+
+    hdbits-fetchfree.py [OPTIONS] [FILE]
+
+	RUN MODES
+
+	-f, --fetch-free
+		Checks the most recent 30 uploads and downloads any that are freeleech
+
+	-F, --fetch-featured
+		Checks the list of upcoming featured torrents and downloads any that are freeleech. High number 
+		of API calls. Not recommended to be run more than once every 5 minutes.
+
+	-h, --help
+		display this help and exits
+
+	--makeconf
+		Generates json.config and exits
+
+	-t, -torrentid ######
+		Download .torrent file of the matching id
+
+	-u, --update-featured filename.html
+		Processes the "Featured Torrents Queue"	page from hdbits and adds them to a watchlist. Local
+		files only. Does not accept URLs to not break rule prohibiting site scraping.
+
+	--version
+		Shows version number
+
+	MODIFIERS
+
+	--allowdupes
+		Bypasses checks to not download dupes
+
+	--noverify
+		Skips SSL verification for API queries
+
+	-v
+		Verbose output
+
 ### Automation
 
 Sample crontab to check new torrents every minute and featured every 5
 
-	* * * * *       /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py
-	*/5 * * * *     /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py -f
+	* * * * *       /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py --fetch-free
+	*/5 * * * *     /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py --fetch-featured
 
 ###json.config
 
