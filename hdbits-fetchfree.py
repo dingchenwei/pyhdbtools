@@ -73,7 +73,7 @@ def generateConfigFile(sslVerify=True):
 	while True:
 		usernameInput = raw_input("Please input your hdbits username: [" + usernameDefaultInput + "] ")
 		passkeyInput = raw_input("Please input your hdbits passkey: [" + passkeyDefaultInput + "] ")
-		watchdirInput = raw_input(".torrent file output directory (relative or absolute): [" + watchdirDefaultInput + "] ") 
+		watchdirInput = raw_input(".torrent file output directory: [" + watchdirDefaultInput + "] ") 
 
 		#if no input, go with default input
 		if len(usernameInput) == 0:
@@ -82,6 +82,20 @@ def generateConfigFile(sslVerify=True):
 			passkeyInput = passkeyDefaultInput
 		if len(watchdirInput) == 0:
 			watchdirInput = watchdirDefaultInput
+		absWatchdir = os.path.abspath(watchdirInput)
+
+		#Checking watchdir path
+		if os.path.exists(absWatchdir) == False:
+			while True:
+				a =  raw_input("Warning: path does not exist, create? (y/n) ")
+				if a == 'y':
+					try:
+						os.makedirs(absWatchdir)
+					except:
+						print "ERROR: Could not create directory"
+					break
+				elif a == 'n':
+					break
 
 		print "\n\nUsername: " + usernameInput
 		print "Passkey: " + passkeyInput
@@ -241,9 +255,9 @@ def main():
 
 	#connect to database and create tables if they don't exist
 	try:
-		conn = sqlite3.connect(fileBasePath + "/hdbits.db")
+		conn = sqlite3.connect(os.path.join(fileBasePath,'hdbits.db'))
 	except IOError:
-		print "Permissions error at " + fileBasePath + "/hdbits.db"
+		print "ERROR: Permissions error at " + os.path.join(fileBasePath,'hdbits.db')
 		exit(1) 
 
 	conn.execute("CREATE TABLE IF NOT EXISTS complete(id INT, name TEXT)")
@@ -277,7 +291,6 @@ def main():
 			payload = {"username":username,"passkey":passkey,"limit":"1","id":row[1]}
 			response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify)
 			torrentData = json.loads(response.text)
-
 			if isDownloaded(torrentData['data'][0]['id']):
 				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
 				conn.commit()
