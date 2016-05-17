@@ -24,18 +24,18 @@ def fetchTorrent(id,watchdir,sslVerify=True):
 		torrentUrl = "https://hdbits.org/download.php?id=" + str(fetchData['data'][0]['id']) + "&passkey=" + passkey
 		idStr = str(fetchData['data'][0]['id'])
 		nameStr = fetchData['data'][0]['filename']
-		fullStr = os.path.abspath(watchdir) + nameStr
+		fullPath = os.path.join(watchdir,nameStr)
 
 		print "fetching: " + nameStr + " at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		#save .torrent file
 		torrentFile = urllib2.urlopen(torrentUrl)
 		try:
-			with open(fullStr,'wb') as output:
+			with open(fullPath,'wb') as output:
 				output.write(torrentFile.read())
 			if verbose:
-				print "writing .torrent file to " + fullStr
+				print "writing .torrent file to " + fullPath
 		except IOError:
-			print "ERROR: could not write " + fullStr
+			print "ERROR: could not write " + fullPath
 			exit(1) 
 		#log download to database
 		conn.execute('''INSERT INTO complete(id, name) VALUES(?,?)''', (idStr, nameStr))
@@ -54,7 +54,7 @@ def populateWatchlist(queueFilename):
 	i=0;
 	for x in hyperlinks:
 		if not isDownloaded(x[15:]) and not isWatched(x[15:]):
-			print names[i] + " added to watchlist"
+			print names[i].encode('ascii', 'ignore').decode('ascii') + " added to watchlist"
 			idStr = str(x[15:])
 			indexStr = str(i)
 			nameStr = names[i].encode('ascii', 'ignore').decode('ascii')
@@ -112,10 +112,10 @@ def generateConfigFile(sslVerify=True):
 		if isCorrect:
 			break
 
-	data = {'username':usernameInput,'passkey':passkeyInput,'output_dir':watchdirInput}
+	data = {'username':usernameInput,'passkey':passkeyInput,'output_dir':os.path.abspath(watchdirInput)}
 	#write config file
 	try:
-		with open(fileBasePath + "/config.json", 'w') as outfile:
+		with open(os.path.join(fileBasePath,'config.json'), 'w') as outfile:
 			json.dump(data, outfile)
 	except IOError:
 		print "ERROR: Cannot write config.json"
@@ -223,7 +223,7 @@ def main():
 	#importing json.config
 	fileBasePath = os.path.dirname(os.path.realpath(__file__))
 	try:
-		with open(fileBasePath + "/config.json",'r') as json_data:
+		with open(os.path.join(fileBasePath,'config.json'),'r') as json_data:
 			jsonConfig = json.load(json_data)
 			json_data.close()
 	except IOError:
