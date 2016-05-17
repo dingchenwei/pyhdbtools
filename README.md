@@ -1,12 +1,12 @@
 # hdbits-fetchfree
-A tool for automatically fetching new freeleech and featured torrents at hdbits
+A tool for interacting with the hdbits api and downloading torrents
 
 ## Getting Started
 
 ### Prerequisites
 * Linux, OS X, Windows
 * Python 2.7
-* Python packaged: lxml, requests 
+* Python packages: lxml, requests 
 ```
 pip install lxml requests
 ```
@@ -75,8 +75,8 @@ You can then tell the app to check the upcoming queue to see if any of them are 
 
 Sample crontab to check new torrents every minute and featured every 5
 
-	* * * * *       /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py -f
-	*/5 * * * *     /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py -F
+	* * * * *       /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py --fetch-free
+	*/5 * * * *     /usr/bin/python ~/hdbits-fetchfree/hdbits-fetchfree.py --fetch-featured
 
 ###json.config
 
