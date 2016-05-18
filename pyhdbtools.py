@@ -1,4 +1,5 @@
-import json, requests, sys, urllib2, pprint, sqlite3, getopt, os, textwrap, datetime
+import json, requests, sys, urllib2, sqlite3, getopt, os, textwrap, datetime
+from pprint import pprint
 from collections import OrderedDict
 from lxml import etree
 
@@ -14,11 +15,11 @@ def isWatched(id):
 	cur.execute('SELECT * FROM watched WHERE id=?', (id,))
 	return False if len(cur.fetchall()) == 0 else True
 
-def fetchTorrent(id,watchdir,sslVerify=True):
+def fetchTorrent(id,watchdir,sslVerify=True,allowDupes=False):
 	#fetches torrent based on the given torrent id.  checks the database if it's already been downloaded.
 	#if not, it downloads it.
-	apiUrl = 'https://hdbits.org/api/torrents'
 	if isDownloaded(id) == False or allowDupes:
+		apiUrl = 'https://hdbits.org/api/torrents'
 		fetchPayload = {"username":username,"passkey":passkey,"limit":"1","id":id}
 		fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=sslVerify)
 		fetchData = json.loads(fetchResponse.text)
@@ -26,8 +27,8 @@ def fetchTorrent(id,watchdir,sslVerify=True):
 		idStr = str(fetchData['data'][0]['id'])
 		nameStr = fetchData['data'][0]['filename']
 		fullPath = os.path.join(watchdir,nameStr)
-
 		print "fetching: " + nameStr + " at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 		#save .torrent file
 		torrentFile = urllib2.urlopen(torrentUrl)
 		try:
@@ -52,17 +53,19 @@ def populateWatchlist(queueFilename):
 	names = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/text()")
 	conn.execute('''DROP TABLE watched''')
 	conn.execute('''CREATE TABLE IF NOT EXISTS watched(idx INT, id INT, name TEXT)''')
-	i=0;
+	i=0
 	for x in hyperlinks:
-		if not isDownloaded(x[15:]) and not isWatched(x[15:]):
+		if not isDownloaded(x[15:]):
+			#encode/decode stuff required to avoid unicode errors in Windows and SQL
 			print names[i].encode('ascii', 'ignore').decode('ascii') + " added to watchlist"
 			idStr = str(x[15:])
 			indexStr = str(i)
 			nameStr = names[i].encode('ascii', 'ignore').decode('ascii')
 			conn.execute('''INSERT INTO watched(idx,id,name) VALUES(?,?,?)''', (indexStr, idStr, nameStr))
 		i+=1
-	conn.commit()	
-	exit(0)
+	if i == 0:
+		print "Warning: no items found to add to watchlist"
+	conn.commit()
 
 def generateConfigFile(sslVerify=True):
 	isCorrect = False
@@ -135,6 +138,7 @@ def generateConfigFile(sslVerify=True):
 	except IOError:
 		print "ERROR: Cannot write config.json"
 		exit(1)
+
 	#remove world read from config file to keep passkey a little more secure
 	os.chmod(os.path.join(fileBasePath,'config.json'), 0660)
 	exit(0)
@@ -178,9 +182,8 @@ def displayHelp():
 
 	-v
 		Verbose output
-
     """)
-	exit(1)
+	exit(0)
 
 def main():
 	global username, passkey, headers, verbose, conn, debug
@@ -264,8 +267,8 @@ def main():
 	conn.execute("CREATE TABLE IF NOT EXISTS complete(id INT, name TEXT)")
 	conn.execute("CREATE TABLE IF NOT EXISTS watched(id INT, name TEXT)")
 
-	if(singleTorrent):
-		fetchTorrent(torrentID, watchdir,sslVerify=sslVerify)
+	if singleTorrent:
+		fetchTorrent(torrentID, watchdir,sslVerify=sslVerify,allowDupes=allowDupes)
 		exit(1)
 
 	if updateFeatured:
@@ -280,7 +283,7 @@ def main():
 
 		for x in torrentData['data']:
 			if x['freeleech'] == 'yes':
-				fetchTorrent(x['id'],watchdir,sslVerify=sslVerify)
+				fetchTorrent(x['id'],watchdir,sslVerify=sslVerify,allowDupes=allowDupes)
 
 	#Checks the first 7 entries in the watchlist and downloads them if freeleech
 	if fetchFeatured:
@@ -296,7 +299,7 @@ def main():
 				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
 				conn.commit()
 			elif torrentData['data'][0]['freeleech'] == "yes":
-				fetchTorrent(torrentData['data'][0]['id'],watchdir,sslVerify=sslVerify)
+				fetchTorrent(torrentData['data'][0]['id'],watchdir,sslVerify=sslVerify,allowDupes=allowDupes)
 				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
 				conn.commit()
 			i+=1
