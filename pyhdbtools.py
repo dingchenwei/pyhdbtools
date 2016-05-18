@@ -1,4 +1,5 @@
 import json, requests, sys, urllib2, pprint, sqlite3, getopt, os, textwrap, datetime
+from collections import OrderedDict
 from lxml import etree
 
 def isDownloaded(id):
@@ -97,7 +98,7 @@ def generateConfigFile(sslVerify=True):
 				elif a == 'n':
 					break
 
-		print "\n\nUsername: " + usernameInput
+		print "\nUsername: " + usernameInput
 		print "Passkey: " + passkeyInput
 		print "Output Directory: " + os.path.abspath(watchdirInput)
 
@@ -126,16 +127,16 @@ def generateConfigFile(sslVerify=True):
 		if isCorrect:
 			break
 
-	data = {'username':usernameInput,'passkey':passkeyInput,'output_dir':os.path.abspath(watchdirInput)}
 	#write config file
+	data = OrderedDict([('username',usernameInput),('passkey',passkeyInput),('output_dir',os.path.abspath(watchdirInput))])
 	try:
 		with open(os.path.join(fileBasePath,'config.json'), 'w') as outfile:
-			json.dump(data, outfile)
+			json.dump(data, outfile, indent=4, separators=(',', ': '))
 	except IOError:
 		print "ERROR: Cannot write config.json"
 		exit(1)
 	#remove world read from config file to keep passkey a little more secure
-	os.chmod('config.json', 0660)
+	os.chmod(os.path.join(fileBasePath,'config.json'), 0660)
 	exit(0)
 
 def displayHelp():
@@ -241,10 +242,10 @@ def main():
 			jsonConfig = json.load(json_data)
 			json_data.close()
 	except IOError:
-		print "config.json not found or not readable. Please run again with --makconf"
+		print "ERROR: config.json not found or not readable. Please run again with --makconf"
 		exit(1)
 	except:
-		print "config.json is invalid. Please recreate with --makeconf"
+		print "ERROR: config.json is invalid. Please recreate with --makeconf"
 		exit(1)
 
 	username = jsonConfig['username']
