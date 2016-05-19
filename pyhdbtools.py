@@ -93,6 +93,13 @@ def isWatched(id):
 def fetchTorrent(id,outputdir,sslVerify=True,allowDupes=False):
 	#fetches torrent based on the given torrent id.  checks the database if it's already been downloaded.
 	#if not, it downloads it.
+	cfg = JSONConfig()
+	cfg.read('config.json')
+
+	username = cfg.getBaseConfig()['username']
+	passkey = cfg.getBaseConfig()['passkey']
+	outputdir = cfg.getBaseConfig()['outputdir']
+
 	if isDownloaded(id) == False or allowDupes:
 		apiUrl = 'https://hdbits.org/api/torrents'
 		fetchPayload = {"username":username,"passkey":passkey,"limit":"1","id":id}
@@ -375,7 +382,7 @@ def main():
 	#fetch any freeleech in newest 30
 	if fetchFree:
 		apiUrl = 'https://hdbits.org/api/torrents'
-		payload = {"username":username,"passkey":passkey,"limit":"30"}
+		payload = {"username":username,"passkey":passkey,"limit":"100"}
 		response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify)
 		torrentData = json.loads(response.text)
 
