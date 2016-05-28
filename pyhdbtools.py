@@ -23,15 +23,18 @@ class JSONConfig:
 			print "ERROR: config.json is invalid. Please recreate with --makeconf"
 			exit(1)
 
-		self.username = jsonConfig['username']
-		self.passkey = jsonConfig['passkey']
-		self.outputdir = jsonConfig['outputdir']
-		if jsonConfig['cookie']['uid'] != "":
-			self.cookiePresent = True
-			self.c_uid = jsonConfig['cookie']['uid']
-			self.c_pass = jsonConfig['cookie']['pass']
-			self.c_hash = jsonConfig['cookie']['hash']
-			self.cookie = {'uid':self.c_uid,'pass':self.c_pass,'hash':self.c_hash}
+		try:
+			self.username = jsonConfig['username']
+			self.passkey = jsonConfig['passkey']
+			self.outputdir = jsonConfig['outputdir']
+			if jsonConfig['cookie']['uid'] != "":
+				self.cookiePresent = True
+				self.c_uid = jsonConfig['cookie']['uid']
+				self.c_pass = jsonConfig['cookie']['pass']
+				self.c_hash = jsonConfig['cookie']['hash']
+				self.cookie = {'uid':self.c_uid,'pass':self.c_pass,'hash':self.c_hash}
+		except KeyError:
+			pass
 
 	def fileExists(self,filename):
 		fileBasePath = os.path.dirname(os.path.realpath(__file__))
@@ -46,7 +49,6 @@ class JSONConfig:
 		#cookieJson = OrderedDict([('uid',self.c_uid),('pass',self.c_pass),('hash',self.c_hash)])
 		fileBasePath = os.path.dirname(os.path.realpath(__file__))
 		data = OrderedDict([('username',self.username),('passkey',self.passkey),('outputdir',os.path.abspath(self.outputdir)),('cookie',self.cookie)])
-
 		try:
 			with open(os.path.join(fileBasePath,filename), 'w') as outfile:
 				json.dump(data, outfile, indent=4, separators=(',', ': '))
@@ -103,7 +105,14 @@ def fetchTorrent(id,outputdir,sslVerify=True,allowDupes=False):
 	if isDownloaded(id) == False or allowDupes:
 		apiUrl = 'https://hdbits.org/api/torrents'
 		fetchPayload = {"username":username,"passkey":passkey,"limit":"1","id":id}
-		fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=sslVerify)
+		try: 
+			fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=sslVerify, timeout=5)
+		except requests.Timeout:
+			print "Connection problemm: Timeout exceeded"
+			exit(1)
+		except:
+			print "Connection Error"
+			exit(1)		
 		fetchData = json.loads(fetchResponse.text)
 		torrentUrl = "https://hdbits.org/download.php?id=" + str(fetchData['data'][0]['id']) + "&passkey=" + passkey
 		idStr = str(fetchData['data'][0]['id'])
@@ -214,7 +223,14 @@ def generateConfigFile(sslVerify=True):
 				apiUrl = "https://hdbits.org/api/test"
 				payload = {"username":usernameInput,"passkey":passkeyInput}
 				headers = {'content-type': 'application/json'}
-				response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify)
+				try:
+					response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
+				except requests.Timeout:
+					print "Connection problemm: Timeout exceeded"
+					exit(1)
+				except:
+					print "Connection Error"
+					exit(1)
 				testData = json.loads(response.text)
 				if testData['status'] == 0:
 					validResponse = True
@@ -382,8 +398,15 @@ def main():
 	#fetch any freeleech in newest 30
 	if fetchFree:
 		apiUrl = 'https://hdbits.org/api/torrents'
-		payload = {"username":username,"passkey":passkey,"limit":"100"}
-		response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify)
+		payload = {"username":username,"passkey":passkey,"limit":"30"}
+		try:
+			response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
+		except requests.Timeout:
+			print "Connection problemm: Timeout exceeded"
+			exit(1)
+		except:
+			print "Connection Error"
+			exit(1)
 		torrentData = json.loads(response.text)
 
 		for x in torrentData['data']:
@@ -398,7 +421,14 @@ def main():
 		for row in watchListTorrents:
 			apiUrl = 'https://hdbits.org/api/torrents'
 			payload = {"username":username,"passkey":passkey,"limit":"1","id":row[1]}
-			response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify)
+			try:
+				response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
+			except requests.Timeout:
+				print "Connection problemm: Timeout exceeded"
+				exit(1)
+			except:
+				print "Connection Error"
+			exit(1)
 			torrentData = json.loads(response.text)
 			if isDownloaded(torrentData['data'][0]['id']):
 				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
