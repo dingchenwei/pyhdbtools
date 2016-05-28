@@ -108,7 +108,7 @@ def fetchTorrent(id,outputdir,sslVerify=True,allowDupes=False):
 		try: 
 			fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=sslVerify, timeout=5)
 		except requests.Timeout:
-			print "Connection problemm: Timeout exceeded"
+			print "Connection problem: Timeout exceeded"
 			exit(1)
 		except:
 			print "Connection Error"
@@ -226,7 +226,7 @@ def generateConfigFile(sslVerify=True):
 				try:
 					response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
 				except requests.Timeout:
-					print "Connection problemm: Timeout exceeded"
+					print "Connection problem: Timeout exceeded"
 					exit(1)
 				except:
 					print "Connection Error"
@@ -402,7 +402,7 @@ def main():
 		try:
 			response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
 		except requests.Timeout:
-			print "Connection problemm: Timeout exceeded"
+			print "Connection problem: Timeout exceeded"
 			exit(1)
 		except:
 			print "Connection Error"
@@ -424,11 +424,11 @@ def main():
 			try:
 				response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
 			except requests.Timeout:
-				print "Connection problemm: Timeout exceeded"
+				print "Connection problem: Timeout exceeded"
 				exit(1)
 			except:
 				print "Connection Error"
-			exit(1)
+				exit(1)
 			torrentData = json.loads(response.text)
 			if isDownloaded(torrentData['data'][0]['id']):
 				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
