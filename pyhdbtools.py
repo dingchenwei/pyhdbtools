@@ -108,11 +108,11 @@ def fetchTorrent(id,outputdir,sslVerify=True,allowDupes=False):
 		try: 
 			fetchResponse = requests.post(apiUrl, data=json.dumps(fetchPayload), headers=headers, verify=sslVerify, timeout=5)
 		except requests.Timeout:
-			print "Connection problem: Timeout exceeded"
+			print "Connection Error: API Timeout exceeded"
 			exit(1)
 		except:
-			print "Connection Error"
-			exit(1)		
+			print "Connection Error: API down or unreachable"
+			exit(1)	
 		fetchData = json.loads(fetchResponse.text)
 		torrentUrl = "https://hdbits.org/download.php?id=" + str(fetchData['data'][0]['id']) + "&passkey=" + passkey
 		idStr = str(fetchData['data'][0]['id'])
@@ -226,10 +226,10 @@ def generateConfigFile(sslVerify=True):
 				try:
 					response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
 				except requests.Timeout:
-					print "Connection problem: Timeout exceeded"
+					print "Connection Error: API Timeout exceeded"
 					exit(1)
 				except:
-					print "Connection Error"
+					print "Connection Error: API down or unreachable"
 					exit(1)
 				testData = json.loads(response.text)
 				if testData['status'] == 0:
@@ -402,10 +402,10 @@ def main():
 		try:
 			response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
 		except requests.Timeout:
-			print "Connection problem: Timeout exceeded"
+			print "Connection Error: API Timeout exceeded"
 			exit(1)
 		except:
-			print "Connection Error"
+			print "Connection Error: API down or unreachable"
 			exit(1)
 		torrentData = json.loads(response.text)
 
@@ -424,10 +424,10 @@ def main():
 			try:
 				response = requests.post(apiUrl, data=json.dumps(payload), headers=headers, verify=sslVerify, timeout=5)
 			except requests.Timeout:
-				print "Connection problem: Timeout exceeded"
+				print "Connection Error: API Timeout exceeded"
 				exit(1)
 			except:
-				print "Connection Error"
+				print "Connection Error: API down or unreachable"
 				exit(1)
 			torrentData = json.loads(response.text)
 			if isDownloaded(torrentData['data'][0]['id']):
