@@ -83,7 +83,7 @@ do this more than once a month.
 
 ### Automation
 
-Sample crontab to check new torrents every minute, features torrents, every 5 minutes, and updates featured 
+Sample crontab to check new torrents every minute, features torrents every 5 minutes, and updates featured 
 queue monthly
 
 	* * * * *       /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-free
