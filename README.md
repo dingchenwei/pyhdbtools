@@ -50,6 +50,10 @@ You can then tell the app to check the upcoming queue to see if any of them are 
 	--makeconf
 		Generates json.config and exits
 
+	-q,
+		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Use 
+		at own risk.
+
 	-t, -torrentid ######
 		Download .torrent file of the matching id
 
@@ -73,10 +77,12 @@ You can then tell the app to check the upcoming queue to see if any of them are 
 
 ### Automation
 
-Sample crontab to check new torrents every minute and featured every 5
+Sample crontab to check new torrents every minute, features torrents, every 5 minutes, and updates featured 
+queue monthly
 
 	* * * * *       /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-free
 	*/5 * * * *     /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-featured
+	0 0 1 * *		/usr/bin/python ~/pyhdbtools/pyhdbtools.py -q
 
 ###json.config
 
@@ -85,5 +91,5 @@ json.config is created in the following format:
 	{
 		"username":"barackobama",
 		"passkey":"A1B2C3",
-		"output_dir":"~/rtorrent/watchdir/"
+		"outputdir":"~/rtorrent/watchdir/"
 	}

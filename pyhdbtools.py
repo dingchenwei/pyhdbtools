@@ -2,6 +2,7 @@ import json, requests, sys, urllib2, sqlite3, getopt, os, textwrap, datetime, ur
 from pprint import pprint
 from collections import OrderedDict
 from lxml import etree
+from io import StringIO
 
 class JSONConfig:
 	def __init__(self):
@@ -136,10 +137,12 @@ def fetchTorrent(id,outputdir,sslVerify=True,allowDupes=False):
 	elif debug:
 		print "already fetched: " + str(id)
 
-def populateWatchlist(queueFilename):
-	#checks queue.html, extracts all the ID #s from the links, and adds that list to the db
+def loadQueueFile(queueFilename):
 	parser = etree.HTMLParser()
 	parsedPage = etree.parse(queueFilename, parser)
+
+def populateWatchlist(parsedPage):
+	#checks given filename, extracts all the ID #s from the links, and adds that list to the db
 	hyperlinks = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/@href") 
 	names = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/text()")
 	conn.execute('''DROP TABLE watched''')
@@ -271,12 +274,16 @@ def displayHelp():
 	--makeconf
 		Generates json.config and exits
 
+	-q,
+		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Use 
+		at own risk.
+
 	-t, -torrentid ######
 		Download .torrent file of the matching id
 
 	-u, --update-featured filename.html
 		Processes the "Featured Torrents Queue"	page from hdbits and adds them to a watchlist. Local
-		files only. Does not accept URLs to not break rule prohibiting site scraping.
+		files only.
 
 	--version
 		Shows version number
@@ -296,13 +303,15 @@ def displayHelp():
 
 def scrapeFeaturedQueue():
 	cfg = JSONConfig()
-	cfg.read('json.config')
+	cfg.read('config.json')
 	url = 'https://hdbits.org/featuredqueue.php'
 	cookie = cfg.getCookie()
 	r = requests.post(url, cookies=cookie)
-	fout = open('q.html', "wb")
-	fout.write(r.text.encode('utf8'))
-	fout.close()
+
+	parser = etree.HTMLParser()
+	parsedPage = etree.XML(r.text.encode('utf8'), parser)
+
+	populateWatchlist(parsedPage)
 
 def main():
 	global headers, verbose, conn, debug
@@ -385,14 +394,10 @@ def main():
 		exit(1)
 
 	if updateFeatured:
-		populateWatchlist(queueFilename)
+		populateWatchlist(loadQueueFile(queueFilename))
 
 	if getQueue:
-		#scrapeFeaturedQueue()
-		if cfg.hasCookie():
-			print "has cookie"
-		else:
-			print "no cookie"
+		scrapeFeaturedQueue()
 		exit(1)
 
 	#fetch any freeleech in newest 30
