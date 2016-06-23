@@ -2,7 +2,6 @@ import json, requests, sys, urllib2, sqlite3, getopt, os, textwrap, datetime, ur
 from pprint import pprint
 from collections import OrderedDict
 from lxml import etree
-from io import StringIO
 
 class JSONConfig:
 	def __init__(self):
@@ -274,7 +273,7 @@ def displayHelp():
 	--makeconf
 		Generates json.config and exits
 
-	-q,
+	-q, --scrape-queue
 		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Use 
 		at own risk.
 
@@ -325,7 +324,7 @@ def main():
 
 	#argument option handling
 	options, remainder = getopt.getopt(sys.argv[1:], 'u:hs:VfFvq', ['update-featured=','fetch-featured','makeconf',
-		'noverify','help','single-torrent','allowdupes','fetch-free','version','debug'])
+		'noverify','help','single-torrent','allowdupes','fetch-free','version','debug','scrape-queue'])
 	for opt, arg in options:
 		if opt in ('-v'):
 			verbose = True
@@ -352,7 +351,7 @@ def main():
 		elif opt in ('--debug'):
 			debug = True
 			verbose = True
-		elif opt in ('-q'):
+		elif opt in ('-q','--scrape-queue'):
 			getQueue = True
 
 	if debug:

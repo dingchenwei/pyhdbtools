@@ -31,6 +31,12 @@ You can then tell the app to check the upcoming queue to see if any of them are 
 
 	$ python pyhdbtools.py --fetch-featured
 
+If you have a cookie set, you can let the app fetch featuredqueue.html directly from the site. This may
+be interpreted by site staff to be breaking the rule restricting site scraping. There is no need to do
+do this more than once a month.
+
+	$ python pyhdbtools.py --scrape-queue
+
 ### Additional Options
 
     pyhdbtools.py [OPTIONS] [FILE]
@@ -82,7 +88,7 @@ queue monthly
 
 	* * * * *       /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-free
 	*/5 * * * *     /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-featured
-	0 0 1 * *		/usr/bin/python ~/pyhdbtools/pyhdbtools.py -q
+	0 0 1 * *		/usr/bin/python ~/pyhdbtools/pyhdbtools.py --scrape-queue
 
 ###json.config
 
@@ -92,4 +98,9 @@ json.config is created in the following format:
 		"username":"barackobama",
 		"passkey":"A1B2C3",
 		"outputdir":"~/rtorrent/watchdir/"
+	    "cookie": {
+	        "hash": "1a2b3c4d1a2b3c4d1a2b3c4d1a2b3c4d",
+	        "uid": "1234567",
+	        "pass": "5e6f7a8b5e6f7a8b5e6f7a8b5e6f7a8b"
+	    }
 	}
