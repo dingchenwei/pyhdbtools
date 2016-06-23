@@ -56,7 +56,7 @@ do this more than once a month.
 	--makeconf
 		Generates json.config and exits
 
-	-q,
+	-q, --scrape-queue
 		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Use 
 		at own risk.
 
