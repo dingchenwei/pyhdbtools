@@ -36,7 +36,7 @@ class JSONConfig:
 		except KeyError:
 			pass
 
-	def fileExists(self,filename):
+	def fileExists(self, filename):
 		fileBasePath = os.path.dirname(os.path.realpath(__file__))
 		try:
 			with open(os.path.join(fileBasePath,filename),'r') as json_data:
@@ -92,7 +92,7 @@ def isWatched(id):
 	cur.execute('SELECT * FROM watched WHERE id=?', (id,))
 	return False if len(cur.fetchall()) == 0 else True
 
-def fetchTorrent(id,outputdir,sslVerify=True,allowDupes=False):
+def fetchTorrent(id, outputdir, sslVerify=True, allowDupes=False):
 	#fetches torrent based on the given torrent id.  checks the database if it's already been downloaded.
 	#if not, it downloads it.
 	cfg = JSONConfig()
@@ -150,7 +150,8 @@ def populateWatchlist(parsedPage):
 	for x in hyperlinks:
 		if not isDownloaded(x[15:]):
 			#encode/decode stuff required to avoid unicode errors in Windows and SQL
-			print names[i].encode('ascii', 'ignore').decode('ascii') + " added to watchlist"
+			if verbose:
+				print names[i].encode('ascii', 'ignore').decode('ascii') + " added to watchlist"
 			idStr = str(x[15:])
 			indexStr = str(i)
 			nameStr = names[i].encode('ascii', 'ignore').decode('ascii')
@@ -158,6 +159,8 @@ def populateWatchlist(parsedPage):
 		i+=1
 	if i == 0:
 		print "Warning: no items found to add to watchlist"
+	else:
+		print i + "items added to watchlist"
 	conn.commit()
 
 def generateConfigFile(sslVerify=True):
@@ -271,11 +274,11 @@ def displayHelp():
 		display this help and exits
 
 	--makeconf
-		Generates json.config and exits
+		Generates config.json and exits
 
 	-q, --scrape-queue
-		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Use 
-		at own risk.
+		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Will
+		likely get you banned. Use --update-featured instead.
 
 	-t, -torrentid ######
 		Download .torrent file of the matching id
@@ -315,7 +318,7 @@ def scrapeFeaturedQueue():
 def main():
 	global headers, verbose, conn, debug
 	
-	VERSION = 'build 051816 alpha'
+	VERSION = 'build 063016 beta'
 
 	#default options
 	makeConf = updateFeatured = fetchFeatured = verbose = showVersion = dispHelp = allowDupes = singleTorrent = False
@@ -367,7 +370,7 @@ def main():
 	if dispHelp:
 		displayHelp()
 
-	#importing json.config
+	#importing config.json
 	fileBasePath = os.path.dirname(os.path.realpath(__file__))
 	cfg = JSONConfig()
 	cfg.read('config.json')
@@ -389,7 +392,7 @@ def main():
 	conn.execute("CREATE TABLE IF NOT EXISTS watched(id INT, name TEXT)")
 
 	if singleTorrent:
-		fetchTorrent(torrentID, outputdir ,sslVerify=sslVerify,allowDupes=allowDupes)
+		fetchTorrent(torrentID, outputdir, sslVerify=sslVerify, allowDupes=allowDupes)
 		exit(1)
 
 	if updateFeatured:
@@ -415,7 +418,7 @@ def main():
 
 		for x in torrentData['data']:
 			if x['freeleech'] == 'yes':
-				fetchTorrent(x['id'],outputdir,sslVerify=sslVerify,allowDupes=allowDupes)
+				fetchTorrent(x['id'], outputdir, sslVerify=sslVerify, allowDupes=allowDupes)
 
 	#Checks the first 7 entries in the watchlist and downloads them if freeleech
 	if fetchFeatured:
@@ -438,7 +441,7 @@ def main():
 				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
 				conn.commit()
 			elif torrentData['data'][0]['freeleech'] == "yes":
-				fetchTorrent(torrentData['data'][0]['id'],outputdir,sslVerify=sslVerify,allowDupes=allowDupes)
+				fetchTorrent(torrentData['data'][0]['id'], outputdir, sslVerify=sslVerify, allowDupes=allowDupes)
 				conn.execute('DELETE FROM watched WHERE id=?', (row[1],))
 				conn.commit()
 			i+=1
@@ -446,6 +449,7 @@ def main():
 			print "Warning: watchlist is empty"
 		cur.close()
 
+	#terrible way of handling this.. fix someday
 	if not (updateFeatured or fetchFeatured or fetchFree or singleTorrent or makeConf or showVersion or dispHelp or getQueue):
 		print "ERROR: No runmode specified"
 		displayHelp()

@@ -31,12 +31,6 @@ You can then tell the app to check the upcoming queue to see if any of them are 
 
 	$ python pyhdbtools.py --fetch-featured
 
-If you have a cookie set, you can let the app fetch featuredqueue.html directly from the site. This may
-be interpreted by site staff to be breaking the rule restricting site scraping. There is no need to do
-do this more than once a month.
-
-	$ python pyhdbtools.py --scrape-queue
-
 ### Additional Options
 
     pyhdbtools.py [OPTIONS] [FILE]
@@ -57,15 +51,15 @@ do this more than once a month.
 		Generates json.config and exits
 
 	-q, --scrape-queue
-		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Use 
-		at own risk.
+		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Will
+		likely get you banned. Use --update-featured instead.
 
 	-t, -torrentid ######
 		Download .torrent file of the matching id
 
 	-u, --update-featured filename.html
 		Processes the "Featured Torrents Queue"	page from hdbits and adds them to a watchlist. Local
-		files only. Does not accept URLs to not break rule prohibiting site scraping.
+		files only. Does not accept URLs avoid breaking rule prohibiting site scraping.
 
 	--version
 		Shows version number
@@ -83,16 +77,14 @@ do this more than once a month.
 
 ### Automation
 
-Sample crontab to check new torrents every minute, featured torrents every 5 minutes, and updates featured 
-queue monthly
+Sample crontab to check new torrents every minute and featured torrents every 5 minutes
 
 	* * * * *       /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-free
 	*/5 * * * *     /usr/bin/python ~/pyhdbtools/pyhdbtools.py --fetch-featured
-	0 0 1 * *		/usr/bin/python ~/pyhdbtools/pyhdbtools.py --scrape-queue
 
-###json.config
+###config.json
 
-json.config is created in the following format:
+config.json is created in the following format:
 
 	{
 		"username":"barackobama",
