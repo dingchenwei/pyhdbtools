@@ -160,7 +160,7 @@ def populateWatchlist(parsedPage):
 	if i == 0:
 		print "Warning: no items found to add to watchlist"
 	else:
-		print i + "items added to watchlist"
+		print str(i) + " items added to watchlist"
 	conn.commit()
 
 def generateConfigFile(sslVerify=True):
