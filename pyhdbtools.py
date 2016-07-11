@@ -274,7 +274,7 @@ def displayHelp():
 		display this help and exits
 
 	--makeconf
-		Generates config.json and exits
+		Generates json.config and exits
 
 	-q, --scrape-queue
 		fetches featuredqueue.html from hdbits.org and updates watchlist. Requires valid cookie set. Will
@@ -285,7 +285,7 @@ def displayHelp():
 
 	-u, --update-featured filename.html
 		Processes the "Featured Torrents Queue"	page from hdbits and adds them to a watchlist. Local
-		files only.
+		files only. Does not accept URLs avoid breaking rule prohibiting site scraping.
 
 	--version
 		Shows version number
@@ -303,12 +303,12 @@ def displayHelp():
     """)
 	exit(0)
 
-def scrapeFeaturedQueue():
+def scrapeFeaturedQueue(sslVerify=True):
 	cfg = JSONConfig()
 	cfg.read('config.json')
 	url = 'https://hdbits.org/featuredqueue.php'
 	cookie = cfg.getCookie()
-	r = requests.post(url, cookies=cookie)
+	r = requests.post(url, cookies=cookie, verify=sslVerify)
 
 	parser = etree.HTMLParser()
 	parsedPage = etree.XML(r.text.encode('utf8'), parser)
@@ -318,7 +318,7 @@ def scrapeFeaturedQueue():
 def main():
 	global headers, verbose, conn, debug
 	
-	VERSION = 'build 063016 beta'
+	VERSION = 'build 071116 beta'
 
 	#default options
 	makeConf = updateFeatured = fetchFeatured = verbose = showVersion = dispHelp = allowDupes = singleTorrent = False
@@ -399,7 +399,7 @@ def main():
 		populateWatchlist(loadQueueFile(queueFilename))
 
 	if getQueue:
-		scrapeFeaturedQueue()
+		scrapeFeaturedQueue(sslVerify=sslVerify)
 		exit(1)
 
 	#fetch any freeleech in newest 30
