@@ -2,6 +2,7 @@ import json, requests, sys, urllib2, sqlite3, getopt, os, textwrap, datetime, ur
 from pprint import pprint
 from collections import OrderedDict
 from lxml import etree
+from bs4 import BeautifulSoup
 
 class JSONConfig:
 	def __init__(self):
@@ -137,24 +138,35 @@ def fetchTorrent(id, outputdir, sslVerify=True, allowDupes=False):
 		print "already fetched: " + str(id)
 
 def loadQueueFile(queueFilename):
-	parser = etree.HTMLParser()
-	parsedPage = etree.parse(queueFilename, parser)
+	with open(queueFilename, 'r') as f:
+		read_data = f.read()
+	soup = BeautifulSoup(read_data,'html.parser')
+	subtable = soup.find('table', attrs={'class':'padding2'})
+	populateWatchlist(subtable)
 
-def populateWatchlist(parsedPage):
+def populateWatchlist(subtable):
 	#checks given filename, extracts all the ID #s from the links, and adds that list to the db
-	hyperlinks = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/@href") 
-	names = parsedPage.xpath("/html/body/table[3]/tr/td[2]/table/tr/td/table/tr/td/table/tr/td[1]/a/text()")
+
+	torrentlist = []
+	i=0
+	for row in subtable.findAll('tr'):
+		if i != 0:
+			col = row.findAll('td')
+			torrentlist.append([col[0].text, col[1].text])
+		i=i+1
+	#pprint(torrentlist)
+
 	conn.execute('''DROP TABLE watched''')
 	conn.execute('''CREATE TABLE IF NOT EXISTS watched(idx INT, id INT, name TEXT)''')
 	i=0
-	for x in hyperlinks:
-		if not isDownloaded(x[15:]):
+	for x in torrentlist:
+		if not isDownloaded(x[0]):
 			#encode/decode stuff required to avoid unicode errors in Windows and SQL
 			if verbose:
-				print names[i].encode('ascii', 'ignore').decode('ascii') + " added to watchlist"
-			idStr = str(x[15:])
+				print x[1].encode('ascii', 'ignore').decode('ascii') + " added to watchlist"
+			idStr = str(x[0])
 			indexStr = str(i)
-			nameStr = names[i].encode('ascii', 'ignore').decode('ascii')
+			nameStr = x[1].encode('ascii', 'ignore').decode('ascii')
 			conn.execute('''INSERT INTO watched(idx,id,name) VALUES(?,?,?)''', (indexStr, idStr, nameStr))
 		i+=1
 	if i == 0:
@@ -318,7 +330,7 @@ def scrapeFeaturedQueue(sslVerify=True):
 def main():
 	global headers, verbose, conn, debug
 	
-	VERSION = 'build 071116 beta'
+	VERSION = 'build 033017b'
 
 	#default options
 	makeConf = updateFeatured = fetchFeatured = verbose = showVersion = dispHelp = allowDupes = singleTorrent = False
@@ -396,7 +408,8 @@ def main():
 		exit(1)
 
 	if updateFeatured:
-		populateWatchlist(loadQueueFile(queueFilename))
+		#populateWatchlist(loadQueueFile(queueFilename))
+		loadQueueFile(queueFilename)
 
 	if getQueue:
 		scrapeFeaturedQueue(sslVerify=sslVerify)
