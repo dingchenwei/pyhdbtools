@@ -6,9 +6,9 @@ A tool for interacting with the hdbits api and downloading torrents
 ### Prerequisites
 * Linux, OS X, Windows
 * Python 2.7
-* Python packages: lxml, requests 
+* Python packages: lxml, requests, bs4
 ```
-pip install lxml requests
+pip install lxml requests bs4
 ```
 
 ### First Run
